@@ -1,0 +1,139 @@
+package src
+
+import (
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ChatDTO struct {
+	Attachments []any  `json:"attachments"`
+	AvatarUrl   string `json:"avatar_url"`
+	CreatedAt   uint64 `json:"created_at"`
+	GroupId     string `json:"group_id"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	SenderId    string `json:"sender_id"`
+	SenderType  string `json:"sender_type"`
+	SourceGUID  string `json:"source_guid"`
+	System      bool   `json:"system"`
+	Text        string `json:"text"`
+	UserId      string `json:"user_id"`
+}
+
+func ReceiveChat(c *gin.Context) {
+	chat := ChatDTO{}
+	err := c.BindJSON(&chat)
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	// If the message is from an admin and starts with an exclamation point,
+	// handle dev commands
+	fmt.Println(chat.Text)
+	first_char := []rune(chat.Text)[0]
+	if first_char == '!' {
+		// Validate that an admin brother sent this
+		var brother = Brother{BrotherId: chat.UserId, IsAdmin: true}
+		result := DB.First(&brother)
+		if result.Error != nil {
+			// Someone trying an admin command without admin privileges
+			return
+		}
+
+		command, argstr, args_found := strings.Cut(chat.Text, " ")
+		args := []string{}
+		if args_found {
+			args = strings.Split(argstr, " ")
+		}
+
+		command = command[1:]
+		switch command {
+		case "ping":
+			c.JSON(200, gin.H{
+				"message": "pong",
+			})
+
+		case "attendance":
+			GetAllUsers()
+
+		case "add_brother":
+			if args_found {
+				return
+			}
+
+			_ = args[0]
+			break
+		case "add_pledge":
+			break
+
+		case "make_admin":
+			break
+		case "take_admin":
+			break
+		case "timeout":
+			if args_found {
+				return
+			}
+			_ = args[0]
+			break
+		default:
+			return
+		}
+
+		LikeMessage(chat.GroupId, chat.Id)
+	} else if first_char == '+' || first_char == '-' {
+		// If the message starts with + or -
+		// Handle adding/subtracting points
+		fmt.Println("Handling points")
+		// Validate that a brother sent this
+		var brother = Brother{BrotherId: chat.UserId}
+		result := DB.First(&brother)
+		if result.Error != nil {
+			// A non-brother (or non-registered brother) is trying to assign points
+			return
+		}
+
+		points_str, rest, _ := strings.Cut(chat.Text, " ")
+
+		// Get the points requested
+		points, err := strconv.Atoi(points_str[1:])
+		if err != nil {
+			return
+		}
+		fmt.Println(points)
+
+		// Parse the rest of the string, separating between usernames and later text
+		words := strings.Split(rest, " ")
+		fmt.Println(words)
+		word_i := 0
+		iter_name := ""
+		look_for_name := true
+		for {
+			cur_word := words[word_i]
+			if look_for_name && cur_word[0] != '@' {
+				// If we're looking for a username and don't get one
+				// stop early
+				break
+			}
+			iter_name += cur_word
+
+			var pledge = Pledge{Name: iter_name[1:]}
+			result := DB.First(&pledge)
+			if result.Error == nil || iter_name == "@Rishav Chakravarty" {
+				// Pledge exists with this name
+				fmt.Println(iter_name)
+				look_for_name = true
+				iter_name = ""
+			}
+
+			word_i++
+		}
+
+		LikeMessage(chat.GroupId, chat.Id)
+	}
+}
