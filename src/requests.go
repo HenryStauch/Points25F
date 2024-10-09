@@ -12,7 +12,7 @@ const BASE_URL = "https://api.groupme.com/v3"
 
 type Group struct {
 	Id      int64  `json:"id"`
-	Members []User `json:"members"`
+	Members []any `json:"members"`
 }
 
 // "id": "103844305",
@@ -143,7 +143,7 @@ func GetAllUsers() ([]User, error) {
 }
 
 func LikeMessage(ConversationId string, MessageId string) error {
-	req_str := fmt.Sprintf("%s/messages/%s/%s/like", ConversationId, MessageId)
+	req_str := fmt.Sprintf("%s/messages/%s/%s/like", BASE_URL, ConversationId, MessageId)
 	_, err := http.Get(req_str)
 	if err != nil {
 		fmt.Println(err)

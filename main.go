@@ -6,16 +6,16 @@ import (
 	"rishavc/points/src"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 )
 
 func main() {
 	fmt.Println("Beep beep starting points bot!")
 
-	err := godotenv.Load()
-	if err != nil {
-		panic("ERROR: Could not load .env file")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	panic("ERROR: Could not load .env file")
+	// }
 
 	src.ConnectDatabase()
 
