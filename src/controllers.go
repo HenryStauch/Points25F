@@ -67,20 +67,19 @@ func ReceiveChat(c *gin.Context) {
 			}
 			all_users, err := GetAllUsers()
 			if err != nil {
-				fmt.Println("ERROR: something went wrong with getting all users")
 				return
 			}
 			for _, brother := range args {
 				for _, user := range all_users {
 					brother_sanitized := strings.ReplaceAll(brother, "_", " ")
-					if user.Nickname == brother_sanitized {
+					if strings.EqualFold(brother_sanitized, user.Nickname) {
 						var brother Brother = Brother{
 							Name:      user.Name,
 							BrotherId: user.UserId,
 							IsAdmin:   false,
 							IsTimeout: false,
 						}
-						DB.Create(brother)
+						DB.Create(&brother)
 						fmt.Println("Added brother " + user.Nickname)
 						break
 					}
@@ -104,7 +103,8 @@ func ReceiveChat(c *gin.Context) {
 							PledgeId: user.UserId,
 							Points:   0,
 						}
-						DB.Create(pledge)
+						DB.Create(&pledge)
+						fmt.Println("Added pledge " + user.Nickname)
 						break
 					}
 				}
