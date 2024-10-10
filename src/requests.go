@@ -71,7 +71,7 @@ func SendMessage(text string) {
 		return
 	}
 
-	resp, err := http.Post("https://httpbin.org/post", "application/json",
+	resp, err := http.Post("https://api.groupme.com/v3/bots/post", "application/json",
 		bytes.NewBuffer(json_data))
 
 	if err != nil {
