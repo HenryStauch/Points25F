@@ -67,6 +67,7 @@ func ReceiveChat(c *gin.Context) {
 			}
 			all_users, err := GetAllUsers()
 			if err != nil {
+				fmt.Println("ERROR: something went wrong with getting all users")
 				return
 			}
 			for _, brother := range args {

@@ -36,7 +36,7 @@ func GetAllUsers() ([]User, error) {
 		fmt.Println("ERROR: could not read group info")
 		return nil, err
 	}
-	fmt.Println(string(body))
+	// fmt.Println(string(body))
 
 	var group GroupResponse
 	err = json.Unmarshal(body, &group)
@@ -60,4 +60,8 @@ func LikeMessage(ConversationId string, MessageId string) error {
 		return err
 	}
 	return nil
+}
+
+func SendMessage(text string) {
+    
 }
