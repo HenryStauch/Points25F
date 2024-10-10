@@ -30,7 +30,7 @@ func ConnectDatabase() {
 	brother_err := db.AutoMigrate(&Brother{})
 	points_err := db.AutoMigrate(&Point{})
 	if pledge_err != nil || brother_err != nil || points_err != nil {
-		panic("ERROR: Could not migrate pledge data")
+		panic("ERROR: Could not migrate database data")
 	}
 	DB = db
 
