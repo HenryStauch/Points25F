@@ -49,7 +49,7 @@ func GetAllUsers() ([]User, error) {
 	fmt.Println("Members: ")
 	fmt.Println(group.Response.Members)
 
-	return nil, nil
+	return group.Response.Members, nil
 }
 
 func LikeMessage(ConversationId string, MessageId string) error {
@@ -63,5 +63,5 @@ func LikeMessage(ConversationId string, MessageId string) error {
 }
 
 func SendMessage(text string) {
-    
+
 }
