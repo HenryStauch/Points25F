@@ -159,7 +159,7 @@ func ReceiveChat(c *gin.Context) {
 				break
 			}
 			cur_word := words[word_i]
-			if look_for_name && cur_word[0] != '@' {
+			if look_for_name && len(cur_word) > 0 && cur_word[0] != '@' {
 				// If we're looking for a username and don't get one
 				// stop early
 				break

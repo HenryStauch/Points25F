@@ -54,7 +54,7 @@ func GetAllUsers() ([]User, error) {
 }
 
 func LikeMessage(ConversationId string, MessageId string) error {
-	req_str := fmt.Sprintf("%s/messages/%s/%s/like", BASE_URL, ConversationId, MessageId)
+	req_str := fmt.Sprintf("%s/messages/%s/%s/like?token=%s", BASE_URL, ConversationId, MessageId, os.Getenv("API_KEY"))
 	fmt.Println(req_str)
 	_, err := http.Get(req_str)
 	if err != nil {
