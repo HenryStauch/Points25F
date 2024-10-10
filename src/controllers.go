@@ -44,6 +44,7 @@ func ReceiveChat(c *gin.Context) {
 			// Someone trying an admin command without admin privileges
 			return
 		}
+		fmt.Println(brother.Name)
 
 		command, argstr, args_found := strings.Cut(chat.Text, " ")
 		args := []string{}
@@ -127,7 +128,6 @@ func ReceiveChat(c *gin.Context) {
 	} else if first_char == '+' || first_char == '-' {
 		// If the message starts with + or -
 		// Handle adding/subtracting points
-		fmt.Println("Handling points")
 		// Validate that a brother sent this
 		var brother = Brother{BrotherId: chat.UserId}
 		result := DB.First(&brother)
@@ -135,6 +135,7 @@ func ReceiveChat(c *gin.Context) {
 			// A non-brother (or non-registered brother) is trying to assign points
 			return
 		}
+		fmt.Println("Points from " + brother.Name)
 
 		points_str, rest, _ := strings.Cut(chat.Text, " ")
 
@@ -174,7 +175,7 @@ func ReceiveChat(c *gin.Context) {
 			if result.Error == nil {
 				// if iter_name[1:] == "Jack Macy" || iter_name[1:] == "Miles" {
 				// Pledge exists with this name
-				fmt.Println(iter_name)
+				fmt.Println(pledge.ID, pledge.Name)
 				look_for_name = true
 				iter_name = ""
 

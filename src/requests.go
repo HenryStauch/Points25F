@@ -25,7 +25,7 @@ type GroupResponse struct {
 
 func GetAllUsers() ([]User, error) {
 	req_str := fmt.Sprintf("%s/groups/%s?token=%s", BASE_URL, os.Getenv("GROUP_ID"), os.Getenv("API_KEY"))
-	fmt.Println(req_str)
+	// fmt.Println(req_str)
 	resp, err := http.Get(req_str)
 	if err != nil {
 		fmt.Println(err)
@@ -46,15 +46,16 @@ func GetAllUsers() ([]User, error) {
 		return nil, err
 	}
 
-	fmt.Printf("%+v\n", group.Response)
-	fmt.Println("Members: ")
-	fmt.Println(group.Response.Members)
+	// fmt.Printf("%+v\n", group.Response)
+	// fmt.Println("Members: ")
+	// fmt.Println(group.Response.Members)
 
 	return group.Response.Members, nil
 }
 
 func LikeMessage(ConversationId string, MessageId string) error {
 	req_str := fmt.Sprintf("%s/messages/%s/%s/like", BASE_URL, ConversationId, MessageId)
+	fmt.Println(req_str)
 	_, err := http.Get(req_str)
 	if err != nil {
 		fmt.Println(err)
