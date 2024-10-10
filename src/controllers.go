@@ -171,15 +171,21 @@ func ReceiveChat(c *gin.Context) {
 
 			var pledge = Pledge{Name: iter_name[1:]}
 			result := DB.First(&pledge)
-			if result.Error == nil || iter_name == "@Rishav Chakravarty" {
+			if result.Error == nil {
 				// if iter_name[1:] == "Jack Macy" || iter_name[1:] == "Miles" {
 				// Pledge exists with this name
 				fmt.Println(iter_name)
 				look_for_name = true
 				iter_name = ""
 
-				pledge.Points = pledge.Points + points
-				DB.Save(&pledge)
+				// pledge.Points = pledge.Points + points
+				// DB.Save(&pledge)
+				var point Point = Point{
+					PointsGiven: points,
+					PledgeId:    pledge.ID,
+				}
+				DB.Create(&point)
+
 				fmt.Printf("Gave %d points to %s\n", points, pledge.Name)
 			}
 
