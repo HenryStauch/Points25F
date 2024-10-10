@@ -1,16 +1,29 @@
 package src
 
 import (
-	"gorm.io/driver/sqlite"
+	"fmt"
+	"os"
+
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	db, err := gorm.Open(sqlite.Open("points24F.db"), &gorm.Config{})
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USERNAME"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_DATABASE"),
+		os.Getenv("DB_PORT"),
+	)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
 	if err != nil {
-		panic("ERROR: Could not open database file")
+		panic("ERROR: Database connection refused")
+	} else {
+		fmt.Println("Database connection successful")
 	}
 
 	pledge_err := db.AutoMigrate(&Pledge{})
@@ -21,6 +34,7 @@ func ConnectDatabase() {
 	}
 	DB = db
 
+	// Add me as a permanent admin
 	var dev Brother = Brother{
 		Name:      "Rishav",
 		BrotherId: "55200205",
