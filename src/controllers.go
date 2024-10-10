@@ -54,9 +54,7 @@ func ReceiveChat(c *gin.Context) {
 		command = command[1:]
 		switch command {
 		case "ping":
-			c.JSON(200, gin.H{
-				"message": "pong",
-			})
+			SendMessage("pong")
 
 		case "attendance":
 			GetAllUsers()
@@ -145,30 +143,44 @@ func ReceiveChat(c *gin.Context) {
 		if err != nil {
 			return
 		}
+		if points_str[0] == '-' {
+			points = -points
+		}
 		fmt.Println(points)
 
 		// Parse the rest of the string, separating between usernames and later text
 		words := strings.Split(rest, " ")
-		fmt.Println(words)
 		word_i := 0
 		iter_name := ""
 		look_for_name := true
 		for {
+			if word_i >= len(words) {
+				break
+			}
 			cur_word := words[word_i]
 			if look_for_name && cur_word[0] != '@' {
 				// If we're looking for a username and don't get one
 				// stop early
 				break
 			}
+			if len(iter_name) > 0 {
+				iter_name += " "
+			}
 			iter_name += cur_word
+			look_for_name = false
 
 			var pledge = Pledge{Name: iter_name[1:]}
 			result := DB.First(&pledge)
 			if result.Error == nil || iter_name == "@Rishav Chakravarty" {
+				// if iter_name[1:] == "Jack Macy" || iter_name[1:] == "Miles" {
 				// Pledge exists with this name
 				fmt.Println(iter_name)
 				look_for_name = true
 				iter_name = ""
+
+				pledge.Points = pledge.Points + points
+				DB.Save(&pledge)
+				fmt.Printf("Gave %d points to %s\n", points, pledge.Name)
 			}
 
 			word_i++

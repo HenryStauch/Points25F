@@ -1,6 +1,7 @@
 package src
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -63,5 +64,19 @@ func LikeMessage(ConversationId string, MessageId string) error {
 }
 
 func SendMessage(text string) {
-    
+	values := map[string]string{"bot_id": os.Getenv("BOT_ID"), "text": text}
+	json_data, err := json.Marshal(values)
+
+	if err != nil {
+		return
+	}
+
+	resp, err := http.Post("https://httpbin.org/post", "application/json",
+		bytes.NewBuffer(json_data))
+
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
 }
