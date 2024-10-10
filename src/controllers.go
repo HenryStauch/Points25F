@@ -62,14 +62,53 @@ func ReceiveChat(c *gin.Context) {
 			GetAllUsers()
 
 		case "add_brother":
-			if args_found {
+			if !args_found {
 				return
 			}
-
-			_ = args[0]
+			all_users, err := GetAllUsers()
+			if err != nil {
+				return
+			}
+			for _, brother := range args {
+				for _, user := range all_users {
+					brother_sanitized := strings.ReplaceAll(brother, "_", " ")
+					if user.Nickname == brother_sanitized {
+						var brother Brother = Brother{
+							Name:      user.Name,
+							BrotherId: user.UserId,
+							IsAdmin:   false,
+							IsTimeout: false,
+						}
+						DB.Create(brother)
+						fmt.Println("Added brother " + user.Nickname)
+						break
+					}
+				}
+			}
 			break
 		case "add_pledge":
-			break
+			if !args_found {
+				return
+			}
+			all_users, err := GetAllUsers()
+			if err != nil {
+				return
+			}
+			for _, pledge := range args {
+				for _, user := range all_users {
+					pledge_sanitized := strings.ReplaceAll(pledge, "_", " ")
+					if user.Nickname == pledge_sanitized {
+						var pledge Pledge = Pledge{
+							Name:     user.Name,
+							PledgeId: user.UserId,
+							Points:   0,
+						}
+						DB.Create(pledge)
+						break
+					}
+				}
+
+			}
 
 		case "make_admin":
 			break

@@ -24,14 +24,7 @@ type Point struct {
 }
 
 type User struct {
-	Id         string `json:"id"`
-	UserId     string `json:"user_id"`
-	Nickname   string `json:"nickname"`
-	Name       string `json:"name"`
-	ImageUrl   string `json:"image_url"`
-	Muted      bool   `json:"muted"`
-	Autokicked bool   `json:"autokicked"`
-	Roles      []any  `json:"roles"`
+	UserId   string `json:"user_id"`
+	Nickname string `json:"nickname"`
+	Name     string `json:"name"`
 }
-
-// {"user_id":"55200205","nickname":"Rishav Chakravarty","image_url":"https://i.groupme.com/979x979.jpeg.ad5c263dd9b648fc8cec4ad5f4a1a612","id":"1019915005","muted":false,"autokicked":false,"roles":["admin"],"name":"Rishav Chakravarty"}
