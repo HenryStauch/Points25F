@@ -240,7 +240,7 @@ func ReceiveChat(c *gin.Context) {
 			look_for_name = false
 
 			var pledge = Pledge{}
-			result := DB.First(&pledge, "name = ?", iter_name[1:])
+			result := DB.Limit(1).Find(&pledge, "name = ?", iter_name[1:])
 			if result.Error == nil {
 				// Pledge exists with this name
 				look_for_name = true
