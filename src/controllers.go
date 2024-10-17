@@ -219,15 +219,17 @@ func ReceiveChat(c *gin.Context) {
 
 		// Parse the rest of the string, separating between usernames and later text
 		words := strings.Split(rest, " ")
-		word_i := 0
 		iter_name := ""
 		look_for_name := true
 		found_name := false
-		for {
+		for word_i, cur_word := range words {
 			if word_i >= len(words) {
 				break
 			}
-			cur_word := words[word_i]
+			if len(cur_word) == 0 {
+				// Handle double-space messages
+				continue
+			}
 			if look_for_name && len(cur_word) > 0 && cur_word[0] != '@' {
 				// If we're looking for a username and don't get one
 				// stop early
@@ -255,8 +257,6 @@ func ReceiveChat(c *gin.Context) {
 				}
 				DB.Create(&point)
 			} // Otherwise, keep looking
-
-			word_i++
 		}
 
 		if found_name {
