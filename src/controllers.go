@@ -2,11 +2,13 @@ package src
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/montanaflynn/stats"
 )
 
 type ChatDTO struct {
@@ -34,7 +36,6 @@ func ReceiveChat(c *gin.Context) {
 
 	// If the message is from an admin and starts with an exclamation point,
 	// handle dev commands
-	fmt.Println(chat.Text)
 	first_char := []rune(chat.Text)[0]
 	if first_char == '!' {
 		// Validate that an admin brother sent this
@@ -44,7 +45,6 @@ func ReceiveChat(c *gin.Context) {
 			// Someone trying an admin command without admin privileges
 			return
 		}
-		fmt.Println(brother.Name)
 
 		command, argstr, args_found := strings.Cut(chat.Text, " ")
 		args := []string{}
@@ -120,6 +120,76 @@ func ReceiveChat(c *gin.Context) {
 			}
 			_ = args[0]
 			break
+
+		case "tally":
+			fmt.Println("Tallying points!")
+			rows, err := DB.Model(&Point{}).Rows()
+			if err != nil {
+				fmt.Println("Error getting DB rows!")
+				return
+			}
+			var all_points []Point = []Point{}
+			var all_point_values []int = []int{}
+
+			for rows.Next() {
+				var point Point
+				DB.ScanRows(rows, &point)
+
+				all_points = append(all_points, point)
+				// For the point value normalization, want absolute value
+				if point.PointsGiven < 0 {
+					all_point_values = append(all_point_values, -point.PointsGiven)
+				} else {
+					all_point_values = append(all_point_values, point.PointsGiven)
+				}
+			}
+
+			// Stats to determine how much to curve points
+			point_val_data := stats.LoadRawData(all_point_values)
+			points_mode_arr, _ := point_val_data.Mode()
+			mode_arr_data := stats.LoadRawData(points_mode_arr)
+			mode, _ := stats.Mean(mode_arr_data)
+			fmt.Println(mode)
+			// This is arbitrary
+			// Multiplying factor so with int truncation it doesn't all turn to 0s
+			const factor int = 50
+
+			for _, point_el := range all_points {
+				is_neg := point_el.PointsGiven < 0
+				point_give_req := point_el.PointsGiven
+
+				var points_to_give int
+				if is_neg {
+					point_float := math.Log2(float64(-point_give_req)) / math.Log2(mode)
+					point_float *= float64(factor)
+					points_to_give = -int(point_float)
+				} else {
+					point_float := math.Log2(float64(point_give_req)) / math.Log2(mode)
+					point_float *= float64(factor)
+					points_to_give = int(point_float)
+				}
+				if points_to_give == 0 {
+					continue
+				}
+				if points_to_give > 3*factor {
+					points_to_give = 3 * factor
+				} else if points_to_give < -3*factor {
+					points_to_give = -3 * factor
+				}
+
+				var pledge Pledge
+				result := DB.First(&pledge, "id = ?", point_el.PledgeId)
+				if result.Error != nil {
+					// a shame.
+					continue
+				}
+				pledge.Points += points_to_give
+				// fmt.Println(points_to_give)
+				DB.Save(&pledge)
+			}
+
+			DB.Model(Point{}).Delete(&Point{})
+
 		default:
 			return
 		}
@@ -135,7 +205,6 @@ func ReceiveChat(c *gin.Context) {
 			// A non-brother (or non-registered brother) is trying to assign points
 			return
 		}
-		fmt.Println("Points from " + brother.Name)
 
 		points_str, rest, _ := strings.Cut(chat.Text, " ")
 
@@ -147,7 +216,6 @@ func ReceiveChat(c *gin.Context) {
 		if points_str[0] == '-' {
 			points = -points
 		}
-		fmt.Println(points)
 
 		// Parse the rest of the string, separating between usernames and later text
 		words := strings.Split(rest, " ")
@@ -156,13 +224,13 @@ func ReceiveChat(c *gin.Context) {
 		look_for_name := true
 		for {
 			if word_i >= len(words) {
-				break
+				return
 			}
 			cur_word := words[word_i]
 			if look_for_name && len(cur_word) > 0 && cur_word[0] != '@' {
 				// If we're looking for a username and don't get one
 				// stop early
-				break
+				return
 			}
 			if len(iter_name) > 0 {
 				iter_name += " "
@@ -173,9 +241,7 @@ func ReceiveChat(c *gin.Context) {
 			var pledge = Pledge{}
 			result := DB.First(&pledge, "name = ?", iter_name[1:])
 			if result.Error == nil {
-				// if iter_name[1:] == "Jack Macy" || iter_name[1:] == "Miles" {
 				// Pledge exists with this name
-				fmt.Println(pledge.ID, pledge.Name)
 				look_for_name = true
 				iter_name = ""
 
@@ -186,8 +252,8 @@ func ReceiveChat(c *gin.Context) {
 					PledgeId:    pledge.ID,
 				}
 				DB.Create(&point)
-
-				fmt.Printf("Gave %d points to %s\n", points, pledge.Name)
+			} else {
+				return
 			}
 
 			word_i++
