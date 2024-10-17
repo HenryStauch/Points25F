@@ -222,15 +222,16 @@ func ReceiveChat(c *gin.Context) {
 		word_i := 0
 		iter_name := ""
 		look_for_name := true
+		found_name := false
 		for {
 			if word_i >= len(words) {
-				return
+				break
 			}
 			cur_word := words[word_i]
 			if look_for_name && len(cur_word) > 0 && cur_word[0] != '@' {
 				// If we're looking for a username and don't get one
 				// stop early
-				return
+				break
 			}
 			if len(iter_name) > 0 {
 				iter_name += " "
@@ -244,6 +245,7 @@ func ReceiveChat(c *gin.Context) {
 				// Pledge exists with this name
 				look_for_name = true
 				iter_name = ""
+				found_name = true
 
 				// pledge.Points = pledge.Points + points
 				// DB.Save(&pledge)
@@ -252,13 +254,13 @@ func ReceiveChat(c *gin.Context) {
 					PledgeId:    pledge.ID,
 				}
 				DB.Create(&point)
-			} else {
-				return
-			}
+			} // Otherwise, keep looking
 
 			word_i++
 		}
 
-		LikeMessage(chat.GroupId, chat.Id)
+		if found_name {
+			LikeMessage(chat.GroupId, chat.Id)
+		}
 	}
 }
