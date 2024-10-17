@@ -242,8 +242,8 @@ func ReceiveChat(c *gin.Context) {
 			look_for_name = false
 
 			var pledge = Pledge{}
-			result := DB.Limit(1).Find(&pledge, "name = ?", iter_name[1:])
-			if result.Error == nil {
+			result := DB.Model(Pledge{}).Limit(1).Find(&pledge, "name = ?", iter_name[1:])
+			if result.Error == nil && result.RowsAffected > 0 {
 				// Pledge exists with this name
 				look_for_name = true
 				iter_name = ""
