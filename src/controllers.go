@@ -147,9 +147,13 @@ func ReceiveChat(c *gin.Context) {
 			// Stats to determine how much to curve points
 			point_val_data := stats.LoadRawData(all_point_values)
 			points_mode_arr, _ := point_val_data.Mode()
+			points_median_arr, _ := point_val_data.Median()
 			mode_arr_data := stats.LoadRawData(points_mode_arr)
+			median_arr_data := stats.LoadRawData(points_median_arr)
 			mode, _ := stats.Mean(mode_arr_data)
-			fmt.Println(mode)
+			median, _ := stats.Mean(median_arr_data)
+			log_factor := mode + median/2
+			fmt.Println(log_factor)
 			// This is arbitrary
 			// Multiplying factor so with int truncation it doesn't all turn to 0s
 			const factor int = 50
@@ -160,11 +164,11 @@ func ReceiveChat(c *gin.Context) {
 
 				var points_to_give int
 				if is_neg {
-					point_float := math.Log2(float64(-point_give_req)) / math.Log2(mode)
+					point_float := math.Log2(float64(-point_give_req)) / math.Log2(log_factor)
 					point_float *= float64(factor)
 					points_to_give = -int(point_float)
 				} else {
-					point_float := math.Log2(float64(point_give_req)) / math.Log2(mode)
+					point_float := math.Log2(float64(point_give_req)) / math.Log2(log_factor)
 					point_float *= float64(factor)
 					points_to_give = int(point_float)
 				}
