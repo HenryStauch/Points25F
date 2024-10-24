@@ -205,7 +205,7 @@ func ReceiveChat(c *gin.Context) {
 		// Validate that a brother sent this
 		var brother = Brother{}
 		result := DB.First(&brother, "brother_id = ?", chat.UserId)
-		if result.Error != nil || brother.IsTimeout {
+		if result.Error != nil {
 			// A non-brother (or timeout/non-registered brother) is trying to assign points
 			return
 		}
