@@ -154,6 +154,15 @@ func ReceiveChat(c *gin.Context) {
 			median, _ := stats.Mean(median_arr_data)
 			log_factor := mode + median/2
 			fmt.Println(log_factor)
+
+			if args_found {
+				arg_log, err := strconv.Atoi(argstr)
+				if err != nil {
+					return
+				}
+				log_factor = float64(arg_log)
+			}
+
 			// This is arbitrary
 			// Multiplying factor so with int truncation it doesn't all turn to 0s
 			const factor int = 50
