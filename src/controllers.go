@@ -221,11 +221,13 @@ func ReceiveChat(c *gin.Context) {
 			for i, pledge := range pledges {
 				row_str := fmt.Sprintf("%d: %s (%d points)", i+1, pledge.Name, pledge.Points)
 				msgs = append(msgs, row_str)
+				if i%5 == 0 || i == len(pledges)-1 {
+					msg := strings.Join(msgs, "\n")
+					SendMessage(msg)
+					// fmt.Println(msg)
+					msgs = []string{}
+				}
 			}
-
-			msg := strings.Join(msgs, "\n")
-			SendMessage(msg)
-			// fmt.Println(msg)
 
 		case "bye":
 			SendMessage("goodbye : )")
