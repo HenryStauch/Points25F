@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/montanaflynn/stats"
@@ -226,6 +227,7 @@ func ReceiveChat(c *gin.Context) {
 					SendMessage(msg)
 					// fmt.Println(msg)
 					msgs = []string{}
+					time.Sleep(500 * time.Millisecond)
 				}
 			}
 
