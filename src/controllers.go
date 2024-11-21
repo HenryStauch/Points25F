@@ -144,6 +144,8 @@ func ReceiveChat(c *gin.Context) {
 				}
 			}
 
+			rows.Close()
+
 			// Stats to determine how much to curve points
 			point_val_data := stats.LoadRawData(all_point_values)
 			points_mode_arr, _ := point_val_data.Mode()
@@ -202,6 +204,31 @@ func ReceiveChat(c *gin.Context) {
 			}
 
 			DB.Model(Point{}).Delete(&Point{})
+			break
+
+		case "leaderboard":
+			fmt.Println("Sending Leaderboard!")
+			var msgs []string
+			msgs = append(msgs, "==Leaderboard==")
+			var pledges []Pledge
+			result := DB.Order("points desc").Find(&pledges)
+
+			if result.RowsAffected == 0 || result.Error != nil {
+				fmt.Println("Error getting pledge points!")
+				return
+			}
+
+			for i, pledge := range pledges {
+				row_str := fmt.Sprintf("%d: %s (%d points)", i+1, pledge.Name, pledge.Points)
+				msgs = append(msgs, row_str)
+			}
+
+			msg := strings.Join(msgs, "\n")
+			SendMessage(msg)
+			// fmt.Println(msg)
+
+		case "bye":
+			SendMessage("goodbye : )")
 
 		default:
 			return
