@@ -12,6 +12,9 @@ import (
 	"github.com/montanaflynn/stats"
 )
 
+// Chat Data Type Object
+// This is the data that gets passed to the API
+// for every chat message
 type ChatDTO struct {
 	Attachments []any  `json:"attachments"`
 	AvatarUrl   string `json:"avatar_url"`
@@ -27,6 +30,7 @@ type ChatDTO struct {
 	UserId      string `json:"user_id"`
 }
 
+// Handle an incoming message
 func ReceiveChat(c *gin.Context) {
 	chat := ChatDTO{}
 	err := c.BindJSON(&chat)
@@ -35,10 +39,11 @@ func ReceiveChat(c *gin.Context) {
 		return
 	}
 
-	// If the message is from an admin and starts with an exclamation point,
-	// handle dev commands
 	first_char := []rune(chat.Text)[0]
 	if first_char == '!' {
+		// If the message is from an admin and starts with an exclamation point,
+		// handle dev commands
+
 		// Validate that an admin brother sent this
 		var brother = Brother{}
 		result := DB.First(&brother, "brother_id = ? AND is_admin = ?", chat.UserId, true)
@@ -54,13 +59,26 @@ func ReceiveChat(c *gin.Context) {
 		}
 
 		command = command[1:]
+		// Parse and handle each dev command
 		switch command {
+			
+			// Ping command: testing the bot
+			//
+			// takes no arguments
 		case "ping":
 			SendMessage("pong")
 
+			// This isn't really useful any more,
+			// if needed it is called on demand
+			// in !add_brother and !add_pledge
 		case "attendance":
 			GetAllUsers()
 
+			// Add one or more members to DB marked as brothers
+			// The provided names should match the groupme nicknames
+			// i.e. if a user changes their GM name, use the new name
+			//
+			// !add_brother Firstname_Lastname Firstname_Lastname ...
 		case "add_brother":
 			if !args_found {
 				return
@@ -69,6 +87,7 @@ func ReceiveChat(c *gin.Context) {
 			if err != nil {
 				return
 			}
+			// This is a silly way of doing it but it works
 			for _, brother := range args {
 				for _, user := range all_users {
 					brother_sanitized := strings.ReplaceAll(brother, "_", " ")
@@ -85,7 +104,12 @@ func ReceiveChat(c *gin.Context) {
 					}
 				}
 			}
-			break
+
+			// Add one or more members to DB marked as pledges
+			// The provided names should match the groupme nicknames
+			// i.e. if a user changes their GM name, use the new name
+			//
+			// !add_pledge Firstname_Lastname Firstname_Lastname ...
 		case "add_pledge":
 			if !args_found {
 				return
@@ -111,17 +135,36 @@ func ReceiveChat(c *gin.Context) {
 
 			}
 
+			// Not yet implemented and I don't plan to...
+			// Haven't needed to have anybody as an admin
+			// except for the person running the bot
 		case "make_admin":
 			break
 		case "take_admin":
 			break
+
+			// This isn't a real command (yet)!
+			// There is a timeout field in the DB but I
+			// haven't cared to implement timeout checking
+			// (although it would be easy).
+			// So far it has been useful as a threat.
+			// They don't know it doesn't do anything.
+			// 
+			// !timeout Firstname_Lastname
 		case "timeout":
 			if args_found {
 				return
 			}
 			_ = args[0]
-			break
 
+			// Tally command
+			// Tallies the points of the week
+			// and adds them to a total with a curve
+			// to handle inflation.
+			// Only places the point values into the DB,
+			// does not display them.
+			//
+			// takes no arguments
 		case "tally":
 			fmt.Println("Tallying points!")
 			rows, err := DB.Model(&Point{}).Rows()
@@ -148,6 +191,7 @@ func ReceiveChat(c *gin.Context) {
 			rows.Close()
 
 			// Stats to determine how much to curve points
+			// Currently using the average of the median and the mode
 			point_val_data := stats.LoadRawData(all_point_values)
 			points_mode_arr, _ := point_val_data.Mode()
 			points_median_arr, _ := point_val_data.Median()
@@ -155,9 +199,10 @@ func ReceiveChat(c *gin.Context) {
 			median_arr_data := stats.LoadRawData(points_median_arr)
 			mode, _ := stats.Mean(mode_arr_data)
 			median, _ := stats.Mean(median_arr_data)
-			log_factor := mode + median/2
+			log_factor := (mode + median) / 2
 			fmt.Println(log_factor)
 
+			// If we supply a manual curving factor, use that instead
 			if args_found {
 				arg_log, err := strconv.Atoi(argstr)
 				if err != nil {
@@ -166,7 +211,7 @@ func ReceiveChat(c *gin.Context) {
 				log_factor = float64(arg_log)
 			}
 
-			// This is arbitrary
+			// This is an arbitrary factor
 			// Multiplying factor so with int truncation it doesn't all turn to 0s
 			const factor int = 50
 
@@ -187,6 +232,8 @@ func ReceiveChat(c *gin.Context) {
 				if points_to_give == 0 {
 					continue
 				}
+				// Arbitrary check:
+				// Even with the curving, is the point addition/deduction too high?
 				if points_to_give > 3*factor {
 					points_to_give = 3 * factor
 				} else if points_to_give < -3*factor {
@@ -205,8 +252,14 @@ func ReceiveChat(c *gin.Context) {
 			}
 
 			DB.Model(Point{}).Delete(&Point{})
-			break
 
+			// Leaderboard command
+			// Displays a leaderboard of the currently saved points
+			// and sends it to the chat,
+			// not including the points that have yet to be tallied
+			// and curved.
+			//
+			// takes no arguments
 		case "leaderboard":
 			fmt.Println("Sending Leaderboard!")
 			var msgs []string
@@ -231,6 +284,7 @@ func ReceiveChat(c *gin.Context) {
 				}
 			}
 
+			// At the end of the term, goodbye points bot!
 		case "bye":
 			SendMessage("goodbye : )")
 
@@ -238,12 +292,19 @@ func ReceiveChat(c *gin.Context) {
 			return
 		}
 
-		LikeMessage(chat.GroupId, chat.Id)
+		// Debugging measure: if you want to have your (admin's)
+		// account like all of the messages to make sure they were successful,
+		// uncomment this
+		// LikeMessage(chat.GroupId, chat.Id)
 	} else if first_char == '+' || first_char == '-' {
 		// If the message starts with + or -
 		// Handle adding/subtracting points
+		// If at any point the parsing was unsuccessful,
+		// exit without doing anything
+
 		// Validate that a brother sent this
 		var brother = Brother{}
+		// This checks by the user ID so doesn't matter if brother changed their name
 		result := DB.First(&brother, "brother_id = ?", chat.UserId)
 		if result.Error != nil {
 			// A non-brother (or timeout/non-registered brother) is trying to assign points
@@ -255,13 +316,16 @@ func ReceiveChat(c *gin.Context) {
 		// Get the points requested
 		points, err := strconv.Atoi(points_str[1:])
 		if err != nil {
+			// non-int points format, parsing failed
 			return
 		}
 		if points_str[0] == '-' {
+			// Point deduction handling
 			points = -points
 		}
 
 		// Parse the rest of the string, separating between usernames and later text
+		// This is a pain to work with
 		words := strings.Split(rest, " ")
 		iter_name := ""
 		look_for_name := true
@@ -280,19 +344,26 @@ func ReceiveChat(c *gin.Context) {
 				break
 			}
 			if len(iter_name) > 0 {
+				// If we already have part of a name,
+				// add a space to the name string to separate
+				// from the rest of the name (e.g. firstname lastname)
 				iter_name += " "
 			}
 			iter_name += cur_word
 			look_for_name = false
 
 			var pledge = Pledge{}
+			// TODO: also check for matching nicknames
+			// This handles new GM @ format which allows people to
+			// @ by either the nickname or the proper name.
+			// In this case, also change the DB to store pledge nicknames
 			result := DB.Model(Pledge{}).Limit(1).Find(&pledge, "name = ?", iter_name[1:])
 			if result.Error == nil && result.RowsAffected > 0 {
 				// Pledge exists with this name
-				look_for_name = true
-				iter_name = ""
-				found_name = true
 
+				// Saves the points directly to the pledge's tally,
+				// ignoring the curving function and removing the need
+				// for a tally. Could be useful for testing/if something breaks
 				// pledge.Points = pledge.Points + points
 				// DB.Save(&pledge)
 				var point Point = Point{
@@ -300,11 +371,18 @@ func ReceiveChat(c *gin.Context) {
 					PledgeId:    pledge.ID,
 				}
 				DB.Create(&point)
-			} // Otherwise, keep looking
+
+				look_for_name = true
+				iter_name = ""
+				found_name = true
+			} // if no pledge exists with this name, keep looking
 		}
 
 		if found_name {
-			LikeMessage(chat.GroupId, chat.Id)
+			// Debugging measure: if you want to have your (admin's)
+			// account like all of the messages to make sure they were successful,
+			// uncomment this
+			// LikeMessage(chat.GroupId, chat.Id)
 		}
 	}
 }

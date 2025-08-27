@@ -23,6 +23,7 @@ type Point struct {
 	PledgeId    uint
 }
 
+// User model only used for adding users to the DB at term start
 type User struct {
 	UserId   string `json:"user_id"`
 	Nickname string `json:"nickname"`
