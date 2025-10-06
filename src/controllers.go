@@ -364,8 +364,8 @@ func ReceiveChat(c *gin.Context) {
 				// Saves the points directly to the pledge's tally,
 				// ignoring the curving function and removing the need
 				// for a tally. Could be useful for testing/if something breaks
-				pledge.Points = pledge.Points + points
-				DB.Save(&pledge)
+				// pledge.Points = pledge.Points + points
+				// DB.Save(&pledge)
 				var point Point = Point{
 					PointsGiven: points,
 					PledgeId:    pledge.ID,
