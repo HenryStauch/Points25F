@@ -295,7 +295,7 @@ func ReceiveChat(c *gin.Context) {
 		// Debugging measure: if you want to have your (admin's)
 		// account like all of the messages to make sure they were successful,
 		// uncomment this
-		// LikeMessage(chat.GroupId, chat.Id)
+		LikeMessage(chat.GroupId, chat.Id)
 	} else if first_char == '+' || first_char == '-' {
 		// If the message starts with + or -
 		// Handle adding/subtracting points
@@ -382,7 +382,7 @@ func ReceiveChat(c *gin.Context) {
 			// Debugging measure: if you want to have your (admin's)
 			// account like all of the messages to make sure they were successful,
 			// uncomment this
-			// LikeMessage(chat.GroupId, chat.Id)
+			LikeMessage(chat.GroupId, chat.Id)
 		}
 	}
 }
