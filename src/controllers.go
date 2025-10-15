@@ -194,18 +194,10 @@ func ReceiveChat(c *gin.Context) {
 			// Currently using the average of the median and the mode
 			point_val_data := stats.LoadRawData(all_point_values)
 			points_mode_arr, _ := point_val_data.Mode()
-			points_median_arr, _ := point_val_data.Median()
-			fmt.Println("Raw mode and median arrays:")
-			fmt.Println(points_mode_arr)
-			fmt.Println(points_median_arr)
+			points_median, _ := point_val_data.Median()
 			mode_arr_data := stats.LoadRawData(points_mode_arr)
-			median_arr_data := stats.LoadRawData(points_median_arr)
 			mode, _ := stats.Mean(mode_arr_data)
-			median, _ := stats.Mean(median_arr_data)
-			fmt.Println("Mode and median arrays:")
-			fmt.Println(mode)
-			fmt.Println(median)
-			log_factor := (mode + median) / 2
+			log_factor := (mode + points_median) / 2
 			fmt.Println(log_factor)
 
 			// If we supply a manual curving factor, use that instead
