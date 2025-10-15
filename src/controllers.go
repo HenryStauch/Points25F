@@ -249,7 +249,7 @@ func ReceiveChat(c *gin.Context) {
 				DB.Save(&pledge)
 			}
 
-			DB.Model(Point{}).Delete(&Point{})
+			DB.Where("1 = 1").Delete(&Point{})
 
 			// Leaderboard command
 			// Displays a leaderboard of the currently saved points
