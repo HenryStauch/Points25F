@@ -167,7 +167,7 @@ func ReceiveChat(c *gin.Context) {
 			// takes no arguments
 		case "tally":
 			fmt.Println("Tallying points!")
-			rows, err := DB.Model(&Point{}).Rows()
+			rows, err := DB.Unscoped().Where("deleted_at IS NULL").Model(&Point{}).Rows()
 			if err != nil {
 				fmt.Println("Error getting DB rows!")
 				return
